@@ -1,211 +1,91 @@
-<!DOCTYPE html>
-<html lang="hi">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Details Form</title>
-<style>
-*{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:Arial,"Noto Sans Devanagari",sans-serif;
-  background:#071426;
-  color:#f4f6fa;
-}
-.container{
-  max-width:680px;
-  margin:auto;
-  padding:28px 18px 40px;
-}
-.card{
-  border:1px solid #34445a;
-  border-radius:18px;
-  padding:26px 18px;
-  background:linear-gradient(180deg,#0a192c,#071426);
-  box-shadow:0 10px 30px #0005;
-}
-.intro{
-  text-align:center;
-  color:#cbd5e1;
-  font-size:18px;
-  line-height:1.55;
-  margin-bottom:28px;
-}
-label{
-  display:block;
-  font-size:18px;
-  font-weight:700;
-  margin:22px 0 10px;
-}
-input,select{
-  width:100%;
-  height:60px;
-  border:1px solid #3b4d64;
-  border-radius:17px;
-  background:#0a1728;
-  color:white;
-  padding:0 20px;
-  font-size:17px;
-  outline:none;
-}
-input:focus,select:focus{border-color:#f6c946}
-select{appearance:auto}
-.options{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:14px;
-}
-.option{
-  height:70px;
-  border:1px solid #3b4d64;
-  border-radius:17px;
-  background:#0a1728;
-  color:#dbe4ef;
-  font-size:18px;
-  font-weight:700;
-  cursor:pointer;
-}
-.option.active{
-  border-color:#f6c946;
-  background:#18243a;
-  color:#fff;
-}
-button.submit{
-  width:100%;
-  margin-top:28px;
-  height:64px;
-  border:0;
-  border-radius:17px;
-  background:linear-gradient(90deg,#e6b72e,#ffd968);
-  color:#111;
-  font-size:18px;
-  font-weight:800;
-  cursor:pointer;
-}
-.note{
-  color:#9eacbd;
-  font-size:14px;
-  line-height:1.5;
-  margin-top:22px;
-  text-align:center;
-}
-@media(max-width:430px){
-  .container{padding:12px 10px 30px}
-  .card{padding:22px 14px}
-  .options{gap:10px}
-  .option{font-size:16px}
-}
-</style>
-</head>
-<body>
-<div class="container">
-  <div class="card">
-    <div class="intro">
-      अपनी basic details भरें। आपकी जानकारी WhatsApp पर भेज दी जाएगी।
-    </div>
+const SHEET_NAME = "Sheet1";
 
-    <form id="detailsForm">
-      <label>1. आपका नाम</label>
-      <input id="name" type="text" placeholder="अपना नाम लिखें" required>
+// Google Drive में जिस folder में photos save होंगे,
+// उसका ID यहां डालें।
+const FOLDER_ID = "YOUR_GOOGLE_DRIVE_FOLDER_ID";
 
-      <label>2. WhatsApp Number</label>
-      <input id="phone" type="tel" inputmode="numeric" maxlength="10"
-             placeholder="10 digit WhatsApp number" required>
 
-      <label>3. आपकी उम्र</label>
-      <input id="age" type="number" min="1" max="100" placeholder="उम्र लिखें" required>
+function doGet() {
+  return HtmlService.createHtmlOutput(`
+    <h2>Form is working</h2>
+    <p>Please open your HTML website.</p>
+  `);
+}
 
-      <label>4. आप अभी क्या करते हैं?</label>
-      <div class="options" id="workOptions">
-        <button type="button" class="option" data-value="Student">Student</button>
-        <button type="button" class="option" data-value="Job">Job</button>
-        <button type="button" class="option" data-value="Business">Business</button>
-        <button type="button" class="option" data-value="Freelancing">Freelancing</button>
-      </div>
 
-      <label>5. आपको किस चीज़ की जानकारी चाहिए?</label>
-      <select id="info" required>
-        <option value="">Select करें</option>
-        <option>Online Work</option>
-        <option>Job</option>
-        <option>Freelancing</option>
-        <option>Business</option>
-        <option>Skill Learning</option>
-      </select>
+function doPost(e) {
+  try {
+    const sheet = SpreadsheetApp
+      .getActiveSpreadsheet()
+      .getSheetByName(SHEET_NAME);
 
-      <label>6. आप प्रतिदिन कितना समय दे सकते हैं?</label>
-      <select id="time" required>
-        <option value="">Select करें</option>
-        <option>1 घंटे से कम</option>
-        <option>1–2 घंटे</option>
-        <option>2–4 घंटे</option>
-        <option>4 घंटे से ज्यादा</option>
-      </select>
+    const name = e.parameter.name || "";
+    const address = e.parameter.address || "";
+    const imageData = e.parameter.image || "";
 
-      <button class="submit" type="submit">💬 GET DETAILS ON WHATSAPP</button>
-      <div class="note">
-        Submit करने पर WhatsApp खुलेगा और भरी गई जानकारी आपके दिए गए WhatsApp नंबर पर भेजने के लिए तैयार हो जाएगी।
-      </div>
-    </form>
-  </div>
-</div>
+    if (!name || !address || !imageData) {
+      return HtmlService.createHtmlOutput(`
+        <h2>❌ जानकारी पूरी नहीं है</h2>
+        <p>कृपया नाम, पता और फोटो सभी भरें।</p>
+      `);
+    }
 
-<script>
-/*
-  IMPORTANT:
-  नीचे YOUR_WHATSAPP_NUMBER को अपने WhatsApp नंबर से बदलें.
-  Country code के साथ लिखें, जैसे भारत के लिए 919876543210
-  + या spaces न लगाएं.
-*/
-const OWNER_WHATSAPP = "917903688943";
+    // Base64 image को decode करना
+    const parts = imageData.split(",");
+    const contentType = parts[0].match(/data:(.*);base64/)[1];
+    const bytes = Utilities.base64Decode(parts[1]);
 
-let selectedWork = "";
+    const blob = Utilities.newBlob(
+      bytes,
+      contentType,
+      "photo_" + new Date().getTime() + ".jpg"
+    );
 
-document.querySelectorAll(".option").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".option").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    selectedWork = btn.dataset.value;
-  });
-});
+    // Google Drive folder
+    const folder = DriveApp.getFolderById(FOLDER_ID);
+    const file = folder.createFile(blob);
 
-document.getElementById("detailsForm").addEventListener("submit", function(e){
-  e.preventDefault();
+    // Image link
+    const imageUrl = file.getUrl();
 
-  if (OWNER_WHATSAPP === "YOUR_WHATSAPP_NUMBER") {
-    alert("पहले वेबसाइट के code में अपना WhatsApp नंबर डालें।");
-    return;
+    // Google Sheet में data save
+    sheet.appendRow([
+      new Date(),
+      name,
+      address,
+      imageUrl
+    ]);
+
+    return HtmlService.createHtmlOutput(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+          body {
+            font-family: Arial;
+            text-align: center;
+            padding: 40px;
+          }
+          .success {
+            color: green;
+            font-size: 24px;
+            font-weight: bold;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="success">✅ Form Successfully Submitted!</div>
+        <p>आपकी जानकारी सफलतापूर्वक जमा हो गई है।</p>
+      </body>
+      </html>
+    `);
+
+  } catch (error) {
+
+    return HtmlService.createHtmlOutput(`
+      <h2>❌ Error</h2>
+      <p>${error.message}</p>
+    `);
   }
-
-  if (!selectedWork) {
-    alert("कृपया आप अभी क्या करते हैं, वह चुनें।");
-    return;
-  }
-
-  const name = document.getElementById("name").value.trim();
-  const phone = document.getElementById("phone").value.trim();
-  const age = document.getElementById("age").value.trim();
-  const info = document.getElementById("info").value;
-  const time = document.getElementById("time").value;
-
-  if (!/^[0-9]{10}$/.test(phone)) {
-    alert("कृपया 10 digit WhatsApp number डालें।");
-    return;
-  }
-
-  const message =
-`नई Details मिली हैं:
-
-नाम: ${name}
-WhatsApp Number: ${phone}
-उम्र: ${age}
-क्या करते हैं: ${selectedWork}
-किस जानकारी की जरूरत: ${info}
-प्रतिदिन समय: ${time}`;
-
-  const url = `https://wa.me/${OWNER_WHATSAPP}?text=${encodeURIComponent(message)}`;
-  window.location.href = url;
-});
-</script>
-</body>
-</html>
+}
